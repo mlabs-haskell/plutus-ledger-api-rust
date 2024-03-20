@@ -8,6 +8,7 @@ use lbr_prelude::json::Json;
 use num_bigint::BigInt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::cmp;
 
 /// An abstraction over `PlutusInterval`, allowing valid values only
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -15,13 +16,13 @@ use serde::{Deserialize, Serialize};
 pub enum Interval<T> {
     Finite(T, T),
     StartAt(T),
+    StartAfter(T),
     EndAt(T),
+    EndBefore(T),
     Always,
     Never,
 }
 
-/// Loosely following the CTL implementation of `intervalToPlutusInterval`
-/// However, as we don't have Semiring classes, the interval upper bounds are always closed
 impl<T> From<Interval<T>> for PlutusInterval<T>
 where
     T: FeatureTraits,
@@ -38,7 +39,27 @@ where
                     closed: true,
                 },
             },
-            Interval::StartAt(end) => PlutusInterval {
+            Interval::StartAt(start) => PlutusInterval {
+                from: LowerBound {
+                    bound: Extended::Finite(start),
+                    closed: true,
+                },
+                to: UpperBound {
+                    bound: Extended::PosInf,
+                    closed: true,
+                },
+            },
+            Interval::StartAfter(start) => PlutusInterval {
+                from: LowerBound {
+                    bound: Extended::Finite(start),
+                    closed: false,
+                },
+                to: UpperBound {
+                    bound: Extended::PosInf,
+                    closed: true,
+                },
+            },
+            Interval::EndAt(end) => PlutusInterval {
                 from: LowerBound {
                     bound: Extended::NegInf,
                     closed: true,
@@ -48,14 +69,14 @@ where
                     closed: true,
                 },
             },
-            Interval::EndAt(start) => PlutusInterval {
+            Interval::EndBefore(end) => PlutusInterval {
                 from: LowerBound {
-                    bound: Extended::Finite(start),
+                    bound: Extended::NegInf,
                     closed: true,
                 },
                 to: UpperBound {
-                    bound: Extended::PosInf,
-                    closed: true,
+                    bound: Extended::Finite(end),
+                    closed: false,
                 },
             },
             Interval::Always => PlutusInterval {
@@ -79,6 +100,122 @@ where
                 },
             },
         }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum TryFromPlutusIntervalError {
+    #[error("Interval is invalid.")]
+    InvalidInterval,
+    #[error("Interval with open bound could not be converted.")]
+    UnexpectedOpenBound,
+}
+
+impl<T> TryFrom<PlutusInterval<T>> for Interval<T>
+where
+    T: FeatureTraits,
+{
+    type Error = TryFromPlutusIntervalError;
+
+    fn try_from(interval: PlutusInterval<T>) -> Result<Self, Self::Error> {
+        Ok(match interval {
+            PlutusInterval {
+                from:
+                    LowerBound {
+                        bound: Extended::Finite(start),
+                        closed: lc,
+                    },
+                to:
+                    UpperBound {
+                        bound: Extended::Finite(end),
+                        closed: uc,
+                    },
+            } => {
+                if lc && uc {
+                    Interval::Finite(start, end)
+                } else {
+                    Err(TryFromPlutusIntervalError::UnexpectedOpenBound)?
+                }
+            }
+            PlutusInterval {
+                from:
+                    LowerBound {
+                        bound: Extended::Finite(start),
+                        closed: lc,
+                    },
+                to:
+                    UpperBound {
+                        bound: Extended::PosInf,
+                        closed: uc,
+                    },
+            } => {
+                if lc && uc {
+                    Interval::StartAt(start)
+                } else if !lc && uc {
+                    Interval::StartAfter(start)
+                } else {
+                    Err(TryFromPlutusIntervalError::UnexpectedOpenBound)?
+                }
+            }
+            PlutusInterval {
+                from:
+                    LowerBound {
+                        bound: Extended::NegInf,
+                        closed: lc,
+                    },
+                to:
+                    UpperBound {
+                        bound: Extended::Finite(end),
+                        closed: uc,
+                    },
+            } => {
+                if uc && lc {
+                    Interval::EndAt(end)
+                } else if !uc && lc {
+                    Interval::EndBefore(end)
+                } else {
+                    Err(TryFromPlutusIntervalError::UnexpectedOpenBound)?
+                }
+            }
+            PlutusInterval {
+                from:
+                    LowerBound {
+                        bound: Extended::NegInf,
+                        closed: lc,
+                    },
+                to:
+                    UpperBound {
+                        bound: Extended::PosInf,
+                        closed: uc,
+                    },
+            } => {
+                if lc && uc {
+                    Interval::Always
+                } else {
+                    Err(TryFromPlutusIntervalError::UnexpectedOpenBound)?
+                }
+            }
+            PlutusInterval {
+                from:
+                    LowerBound {
+                        bound: Extended::PosInf,
+                        closed: lc,
+                    },
+                to:
+                    UpperBound {
+                        bound: Extended::NegInf,
+                        closed: uc,
+                    },
+            } => {
+                if lc && uc {
+                    Interval::Never
+                } else {
+                    Err(TryFromPlutusIntervalError::UnexpectedOpenBound)?
+                }
+            }
+
+            _ => Err(TryFromPlutusIntervalError::InvalidInterval)?,
+        })
     }
 }
 
@@ -235,7 +372,7 @@ where
 }
 
 /// A set extended with a positive and negative infinity.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "lbf", derive(Json))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Extended<T>
@@ -245,6 +382,52 @@ where
     NegInf,
     Finite(T),
     PosInf,
+}
+
+impl<T> Ord for Extended<T>
+where
+    T: FeatureTraits + Ord,
+{
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        match self {
+            Extended::PosInf => match other {
+                Extended::PosInf => cmp::Ordering::Equal,
+                _ => cmp::Ordering::Greater,
+            },
+            Extended::NegInf => match other {
+                Extended::NegInf => cmp::Ordering::Equal,
+                _ => cmp::Ordering::Less,
+            },
+            Extended::Finite(self_val) => match other {
+                Extended::NegInf => cmp::Ordering::Greater,
+                Extended::Finite(other_val) => self_val.cmp(other_val),
+                Extended::PosInf => cmp::Ordering::Less,
+            },
+        }
+    }
+}
+
+impl<T> PartialOrd for Extended<T>
+where
+    T: FeatureTraits + PartialOrd,
+{
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        match self {
+            Extended::PosInf => match other {
+                Extended::PosInf => Some(cmp::Ordering::Equal),
+                _ => Some(cmp::Ordering::Greater),
+            },
+            Extended::NegInf => match other {
+                Extended::NegInf => Some(cmp::Ordering::Equal),
+                _ => Some(cmp::Ordering::Less),
+            },
+            Extended::Finite(self_val) => match other {
+                Extended::NegInf => Some(cmp::Ordering::Greater),
+                Extended::Finite(other_val) => self_val.partial_cmp(other_val),
+                Extended::PosInf => Some(cmp::Ordering::Less),
+            },
+        }
+    }
 }
 
 impl<T> IsPlutusData for Extended<T>
