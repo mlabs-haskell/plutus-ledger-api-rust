@@ -10,6 +10,10 @@ use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
 use std::cmp;
 
+//////////////
+// Interval //
+//////////////
+
 /// An abstraction over `PlutusInterval`, allowing valid values only
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -223,6 +227,10 @@ where
     }
 }
 
+////////////////////
+// PlutusInterval //
+////////////////////
+
 /// An interval of `T`s.
 ///
 /// The interval may be either closed or open at either end, meaning
@@ -263,7 +271,7 @@ where
         match data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 2)?;
+                    verify_constr_fields(fields, 2)?;
                     Ok(PlutusInterval {
                         from: <LowerBound<T>>::from_plutus_data(&fields[0])?,
                         to: <UpperBound<T>>::from_plutus_data(&fields[1])?,
@@ -282,6 +290,10 @@ where
         }
     }
 }
+
+////////////////
+// UpperBound //
+////////////////
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "lbf", derive(Json))]
@@ -309,7 +321,7 @@ where
         match data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 2)?;
+                    verify_constr_fields(fields, 2)?;
                     Ok(UpperBound {
                         bound: <Extended<T>>::from_plutus_data(&fields[0])?,
                         closed: bool::from_plutus_data(&fields[1])?,
@@ -328,6 +340,10 @@ where
         }
     }
 }
+
+////////////////
+// LowerBound //
+////////////////
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "lbf", derive(Json))]
@@ -355,7 +371,7 @@ where
         match data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 2)?;
+                    verify_constr_fields(fields, 2)?;
                     Ok(LowerBound {
                         bound: <Extended<T>>::from_plutus_data(&fields[0])?,
                         closed: bool::from_plutus_data(&fields[1])?,
@@ -374,6 +390,10 @@ where
         }
     }
 }
+
+//////////////
+// Extended //
+//////////////
 
 /// A set extended with a positive and negative infinity.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -448,17 +468,17 @@ where
         match data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(Extended::NegInf)
                 }
                 Ok(1) => {
-                    verify_constr_fields(&fields, 1)?;
+                    verify_constr_fields(fields, 1)?;
                     Ok(Extended::Finite(IsPlutusData::from_plutus_data(
                         &fields[0],
                     )?))
                 }
                 Ok(2) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(Extended::PosInf)
                 }
                 _ => Err(PlutusDataError::UnexpectedPlutusInvariant {

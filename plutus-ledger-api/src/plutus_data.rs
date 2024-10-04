@@ -1,4 +1,5 @@
 //! Plutus Data related types and traits
+use cardano_serialization_lib as csl;
 #[cfg(feature = "lbf")]
 use data_encoding::HEXLOWER;
 #[cfg(feature = "lbf")]
@@ -12,6 +13,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+use crate::csl::csl_to_pla::{FromCSL, TryFromCSL, TryFromCSLError, TryToPLA};
+use crate::csl::pla_to_csl::{TryFromPLA, TryFromPLAError, TryToCSL};
 
 /// Data representation of on-chain data such as Datums and Redeemers
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -171,10 +175,10 @@ pub fn case_plutus_data<'a, T>(
     pd: &'a PlutusData,
 ) -> T {
     match pd {
-        PlutusData::Constr(tag, args) => ctor_case(&tag)(&args),
-        PlutusData::List(args) => list_case(&args),
-        PlutusData::Integer(i) => int_case(&i),
-        other => other_case(&other),
+        PlutusData::Constr(tag, args) => ctor_case(tag)(args),
+        PlutusData::List(args) => list_case(args),
+        PlutusData::Integer(i) => int_case(i),
+        other => other_case(other),
     }
 }
 
@@ -248,11 +252,11 @@ impl IsPlutusData for bool {
         match plutus_data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(false)
                 }
                 Ok(1) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(true)
                 }
                 _ => Err(PlutusDataError::UnexpectedPlutusInvariant {
@@ -342,11 +346,11 @@ where
         match plutus_data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 1)?;
+                    verify_constr_fields(fields, 1)?;
                     Ok(Some(T::from_plutus_data(&fields[0])?))
                 }
                 Ok(1) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(None)
                 }
                 _ => Err(PlutusDataError::UnexpectedPlutusInvariant {
@@ -379,11 +383,11 @@ where
         match plutus_data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 1)?;
+                    verify_constr_fields(fields, 1)?;
                     Ok(Err(E::from_plutus_data(&fields[0])?))
                 }
                 Ok(1) => {
-                    verify_constr_fields(&fields, 1)?;
+                    verify_constr_fields(fields, 1)?;
                     Ok(Ok(T::from_plutus_data(&fields[0])?))
                 }
                 _ => Err(PlutusDataError::UnexpectedPlutusInvariant {
@@ -443,7 +447,7 @@ where
     fn from_plutus_data(plutus_data: &PlutusData) -> Result<Self, PlutusDataError> {
         match plutus_data {
             PlutusData::List(vec) => vec
-                .into_iter()
+                .iter()
                 .map(|val| T::from_plutus_data(val))
                 .collect::<Result<Self, PlutusDataError>>(),
             _ => Err(PlutusDataError::UnexpectedPlutusType {
@@ -471,7 +475,7 @@ where
     fn from_plutus_data(plutus_data: &PlutusData) -> Result<Self, PlutusDataError> {
         match plutus_data {
             PlutusData::Map(dict) => dict
-                .into_iter()
+                .iter()
                 .map(|(key, val)| Ok((K::from_plutus_data(key)?, V::from_plutus_data(val)?)))
                 .collect::<Result<Self, PlutusDataError>>(),
             _ => Err(PlutusDataError::UnexpectedPlutusType {
@@ -491,7 +495,7 @@ impl IsPlutusData for () {
         match plutus_data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 0)?;
+                    verify_constr_fields(fields, 0)?;
                     Ok(())
                 }
                 _ => Err(PlutusDataError::UnexpectedPlutusInvariant {
@@ -534,7 +538,7 @@ where
         match plutus_data {
             PlutusData::Constr(flag, fields) => match u32::try_from(flag) {
                 Ok(0) => {
-                    verify_constr_fields(&fields, 2)?;
+                    verify_constr_fields(fields, 2)?;
                     Ok((
                         A::from_plutus_data(&fields[0])?,
                         B::from_plutus_data(&fields[1])?,
@@ -551,6 +555,91 @@ where
                 got: PlutusType::from(plutus_data),
             }),
         }
+    }
+}
+
+impl TryFromCSL<csl::PlutusData> for PlutusData {
+    fn try_from_csl(value: &csl::PlutusData) -> Result<Self, TryFromCSLError> {
+        Ok(match value.kind() {
+            csl::PlutusDataKind::ConstrPlutusData => {
+                let constr_data = value.as_constr_plutus_data().unwrap();
+                let tag = BigInt::from_csl(&constr_data.alternative());
+                let args = constr_data.data().try_to_pla()?;
+                PlutusData::Constr(tag, args)
+            }
+            csl::PlutusDataKind::Map => PlutusData::Map(value.as_map().unwrap().try_to_pla()?),
+            csl::PlutusDataKind::List => PlutusData::List(value.as_list().unwrap().try_to_pla()?),
+            csl::PlutusDataKind::Integer => {
+                PlutusData::Integer(value.as_integer().unwrap().try_to_pla()?)
+            }
+            csl::PlutusDataKind::Bytes => PlutusData::Bytes(value.as_bytes().unwrap()),
+        })
+    }
+}
+
+impl TryFromCSL<csl::PlutusList> for Vec<PlutusData> {
+    fn try_from_csl(value: &csl::PlutusList) -> Result<Self, TryFromCSLError> {
+        (0..value.len())
+            .map(|idx| value.get(idx).try_to_pla())
+            .collect()
+    }
+}
+
+impl TryFromCSL<csl::PlutusMap> for Vec<(PlutusData, PlutusData)> {
+    fn try_from_csl(c_map: &csl::PlutusMap) -> Result<Self, TryFromCSLError> {
+        let keys = c_map.keys();
+        (0..keys.len()).try_fold(Vec::new(), |mut vector, idx| {
+            let key = keys.get(idx);
+            let values = c_map.get(&key).unwrap();
+
+            for value_idx in 0..values.len() {
+                vector.push((
+                    key.clone().try_to_pla()?,
+                    values.get(value_idx).unwrap().try_to_pla()?,
+                ))
+            }
+
+            Ok(vector)
+        })
+    }
+}
+
+impl TryFromPLA<PlutusData> for csl::PlutusData {
+    fn try_from_pla(val: &PlutusData) -> Result<Self, TryFromPLAError> {
+        match val {
+            PlutusData::Constr(tag, args) => Ok(csl::PlutusData::new_constr_plutus_data(
+                &csl::ConstrPlutusData::new(&tag.try_to_csl()?, &args.try_to_csl()?),
+            )),
+            PlutusData::Map(l) => Ok(csl::PlutusData::new_map(&l.try_to_csl()?)),
+            PlutusData::List(l) => Ok(csl::PlutusData::new_list(&l.try_to_csl()?)),
+            PlutusData::Integer(i) => Ok(csl::PlutusData::new_integer(&i.try_to_csl()?)),
+            PlutusData::Bytes(b) => Ok(csl::PlutusData::new_bytes(b.to_owned())),
+        }
+    }
+}
+
+impl TryFromPLA<Vec<PlutusData>> for csl::PlutusList {
+    fn try_from_pla(val: &Vec<PlutusData>) -> Result<Self, TryFromPLAError> {
+        val.iter()
+            // traverse
+            .map(|x| x.try_to_csl())
+            .collect::<Result<Vec<csl::PlutusData>, TryFromPLAError>>()
+            .map(|x| x.into())
+    }
+}
+
+impl TryFromPLA<Vec<(PlutusData, PlutusData)>> for csl::PlutusMap {
+    fn try_from_pla(val: &Vec<(PlutusData, PlutusData)>) -> Result<Self, TryFromPLAError> {
+        val.iter()
+            .try_fold(csl::PlutusMap::new(), |mut acc, (k, v)| {
+                let mut values = match acc.get(&k.try_to_csl()?) {
+                    Some(existing_values) => existing_values,
+                    None => csl::PlutusMapValues::new(),
+                };
+                values.add(&v.try_to_csl()?);
+                acc.insert(&k.try_to_csl()?, &values);
+                Ok(acc)
+            })
     }
 }
 
@@ -571,9 +660,9 @@ pub fn verify_constr_fields(
 
 /// Given a vector of PlutusData, parse it as an array whose length is known at
 /// compile time.
-pub fn parse_fixed_len_constr_fields<'a, const LEN: usize>(
-    v: &'a [PlutusData],
-) -> Result<&'a [PlutusData; LEN], PlutusDataError> {
+pub fn parse_fixed_len_constr_fields<const LEN: usize>(
+    v: &[PlutusData],
+) -> Result<&[PlutusData; LEN], PlutusDataError> {
     v.try_into()
         .map_err(|_| PlutusDataError::UnexpectedListLength {
             got: v.len(),
@@ -583,9 +672,7 @@ pub fn parse_fixed_len_constr_fields<'a, const LEN: usize>(
 
 /// Given a PlutusData, parse it as PlutusData::Constr and its tag as u32. Return
 /// the u32 tag and fields.
-pub fn parse_constr<'a>(
-    data: &'a PlutusData,
-) -> Result<(u32, &'a Vec<PlutusData>), PlutusDataError> {
+pub fn parse_constr(data: &PlutusData) -> Result<(u32, &Vec<PlutusData>), PlutusDataError> {
     match data {
         PlutusData::Constr(tag, fields) => u32::try_from(tag)
             .map_err(|err| PlutusDataError::UnexpectedPlutusInvariant {
@@ -601,10 +688,10 @@ pub fn parse_constr<'a>(
 }
 
 /// Given a PlutusData, parse it as PlutusData::Constr and verify its tag.
-pub fn parse_constr_with_tag<'a>(
-    data: &'a PlutusData,
+pub fn parse_constr_with_tag(
+    data: &PlutusData,
     expected_tag: u32,
-) -> Result<&'a Vec<PlutusData>, PlutusDataError> {
+) -> Result<&Vec<PlutusData>, PlutusDataError> {
     let (tag, fields) = parse_constr(data)?;
 
     if tag != expected_tag {
