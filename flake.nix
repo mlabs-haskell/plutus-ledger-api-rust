@@ -23,6 +23,8 @@
         ./hercules-ci.nix
 
         ./plutus-ledger-api/build.nix
+        ./is-plutus-data-derive/build.nix
+        ./plutus-data/build.nix
       ];
       debug = true;
       systems = [ "x86_64-linux" "x86_64-darwin" ];
