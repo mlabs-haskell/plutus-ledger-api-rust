@@ -1,0 +1,26 @@
+#[cfg(feature = "lbf")]
+use lbr_prelude::json::Json;
+use num_bigint::BigInt;
+use plutus_data::{IsPlutusData, PlutusData, PlutusDataError};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "lbf", derive(Json))]
+pub struct Rational(pub BigInt, pub BigInt);
+
+impl IsPlutusData for Rational {
+    fn to_plutus_data(&self) -> PlutusData {
+        (self.0.clone(), self.1.clone()).to_plutus_data()
+    }
+
+    fn from_plutus_data(plutus_data: &PlutusData) -> Result<Self, PlutusDataError>
+    where
+        Self: Sized,
+    {
+        let (n, d) = IsPlutusData::from_plutus_data(plutus_data)?;
+
+        Ok(Self(n, d))
+    }
+}
