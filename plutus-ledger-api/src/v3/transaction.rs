@@ -40,6 +40,7 @@ pub struct HotCommitteeCredential(pub Credential);
 pub struct DRepCredential(pub Credential);
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum DRep {
@@ -49,6 +50,7 @@ pub enum DRep {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum Delegatee {
@@ -58,6 +60,7 @@ pub enum Delegatee {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum TxCert {
@@ -75,6 +78,7 @@ pub enum TxCert {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum Voter {
@@ -84,6 +88,7 @@ pub enum Voter {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum Vote {
@@ -93,6 +98,7 @@ pub enum Vote {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct GovernanceActionId {
@@ -101,6 +107,7 @@ pub struct GovernanceActionId {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct Committee {
@@ -109,6 +116,7 @@ pub struct Committee {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct Constitution {
@@ -116,6 +124,7 @@ pub struct Constitution {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct ProtocolVersion {
@@ -131,6 +140,7 @@ pub struct ProtocolVersion {
 pub struct ChangeParameters(pub PlutusData);
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum GovernanceAction {
@@ -152,6 +162,7 @@ pub enum GovernanceAction {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct ProtocolProcedure {
@@ -161,6 +172,7 @@ pub struct ProtocolProcedure {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum ScriptPurpose {
@@ -173,6 +185,7 @@ pub enum ScriptPurpose {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub enum ScriptInfo {
@@ -185,6 +198,7 @@ pub enum ScriptInfo {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionInfo {
@@ -207,6 +221,7 @@ pub struct TransactionInfo {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+#[is_plutus_data_derive_strategy = "Constr"]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct ScriptContext {
