@@ -969,7 +969,7 @@
 // GovernanceAction //
 //////////////////////
 
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = <span class="string">"Constr"</span>]
 #[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
 #[cfg_attr(feature = <span class="string">"lbf"</span>, derive(Json))]
@@ -1010,7 +1010,7 @@
 // ProposalProcedure //
 ///////////////////////
 
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = <span class="string">"Constr"</span>]
 #[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
 #[cfg_attr(feature = <span class="string">"lbf"</span>, derive(Json))]
@@ -1024,7 +1024,7 @@
 // ScriptPurpose //
 ///////////////////
 
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, IsPlutusData)]
+</span><span class="attr">#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = <span class="string">"Constr"</span>]
 #[cfg_attr(feature = <span class="string">"serde"</span>, derive(Serialize, Deserialize))]
 #[cfg_attr(feature = <span class="string">"lbf"</span>, derive(Json))]
