@@ -9,6 +9,7 @@
           devShellHook = config.settings.shell.hook;
           cargoNextestExtraArgs = "--all-features";
           generateDocs = false;
+          runTests = false;
         };
 
     in
