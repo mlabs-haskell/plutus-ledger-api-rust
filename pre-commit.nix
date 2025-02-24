@@ -14,7 +14,6 @@
             nixpkgs-fmt.enable = true;
             deadnix.enable = true;
             statix.enable = true;
-            shellcheck.enable = true;
             typos.enable = true;
             markdownlint.enable = true;
             rustfmt-monorepo.enable = true;
