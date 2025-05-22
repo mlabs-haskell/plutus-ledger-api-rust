@@ -5,6 +5,19 @@
 This changelog is based on [Keep A
 Changelog](https://keepachangelog.com/en/1.1.0).
 
+## v3.0.3
+
+### Changed
+
+- Cardano serialisation lib upgraded to 14.1.2
+
+## v3.0.2
+
+### Changed
+
+- Add missing derive macros
+- Added a few goldens data for V3 types
+
 ## v3.0.1
 
 ### Changed
