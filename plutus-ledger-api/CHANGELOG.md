@@ -5,6 +5,12 @@
 This changelog is based on [Keep A
 Changelog](https://keepachangelog.com/en/1.1.0).
 
+## v3.0.2
+
+### Changed
+
+- Cardano serialisation lib upgraded to 14.1.2
+
 ## v3.0.1
 
 ### Changed
