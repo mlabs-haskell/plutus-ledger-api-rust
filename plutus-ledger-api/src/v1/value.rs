@@ -262,11 +262,17 @@ impl Value {
         self.get_token_amount(&CurrencySymbol::Ada, &TokenName::ada())
     }
 
-    /// Insert a new token into the value, or replace the existing quantity.
+    /// Create a new value by inserting a new token or replacing the existing quantity.
     pub fn insert_token(&self, cs: &CurrencySymbol, tn: &TokenName, a: &BigInt) -> Self {
-        let mut result_map = self.0.clone();
+        let mut result_map = self.clone();
+
+        result_map.insert_token_mut(cs, tn, a);
 
         result_map
+    }
+    /// Insert a new token into the value, or replace the existing quantity.
+    pub fn insert_token_mut(&mut self, cs: &CurrencySymbol, tn: &TokenName, a: &BigInt) {
+        self.0
             .entry(cs.clone())
             .and_modify(|tn_map| {
                 tn_map
@@ -277,8 +283,6 @@ impl Value {
                     .or_insert_with(|| a.clone());
             })
             .or_insert_with(|| singleton((tn.clone(), a.clone())));
-
-        Self(result_map)
     }
 
     /// Return true if the value don't have any entries.
