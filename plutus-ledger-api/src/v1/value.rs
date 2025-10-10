@@ -262,6 +262,14 @@ impl Value {
         self.get_token_amount(&CurrencySymbol::Ada, &TokenName::ada())
     }
 
+    /// Insert ada into a value by inserting or replacing old value
+    pub fn insert_ada_mut(&mut self, amount: BigInt) {
+        self.0.insert(
+            CurrencySymbol::Ada,
+            BTreeMap::from([(TokenName::ada(), amount)]),
+        );
+    }
+
     /// Create a new value by inserting a new token or replacing the existing quantity.
     pub fn insert_token(
         &self,

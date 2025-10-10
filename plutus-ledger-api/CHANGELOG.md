@@ -9,6 +9,7 @@ Changelog](https://keepachangelog.com/en/1.1.0).
 
 ### Added
 
+- Add `insert_ada_mut` to `Value`
 - Add `insert_token_mut` to `Value`
 
 ## v3.0.4
