@@ -5,6 +5,18 @@
 This changelog is based on [Keep A
 Changelog](https://keepachangelog.com/en/1.1.0).
 
+## 3.1.0
+
+### Added
+
+- Add `insert_token_mut` to `Value`
+
+## v3.0.4
+
+### Changed
+
+- Updating all dependencies to latest minor versions
+
 ## v3.0.3
 
 ### Changed

@@ -263,26 +263,42 @@ impl Value {
     }
 
     /// Create a new value by inserting a new token or replacing the existing quantity.
-    pub fn insert_token(&self, cs: &CurrencySymbol, tn: &TokenName, a: &BigInt) -> Self {
+    pub fn insert_token(
+        &self,
+        currency_symbol: &CurrencySymbol,
+        token_name: &TokenName,
+        amount: &BigInt,
+    ) -> Self {
         let mut result_map = self.clone();
 
-        result_map.insert_token_mut(cs, tn, a);
+        result_map.insert_token_mut(currency_symbol.clone(), token_name.clone(), amount.clone());
 
         result_map
     }
     /// Insert a new token into the value, or replace the existing quantity.
-    pub fn insert_token_mut(&mut self, cs: &CurrencySymbol, tn: &TokenName, a: &BigInt) {
-        self.0
-            .entry(cs.clone())
-            .and_modify(|tn_map| {
-                tn_map
-                    .entry(tn.clone())
-                    .and_modify(|old_a| {
-                        old_a.clone_from(a);
-                    })
-                    .or_insert_with(|| a.clone());
-            })
-            .or_insert_with(|| singleton((tn.clone(), a.clone())));
+    pub fn insert_token_mut(
+        &mut self,
+        currency_symbol: CurrencySymbol,
+        token_name: TokenName,
+        amount: BigInt,
+    ) {
+        let tn_map = self.0.get_mut(&currency_symbol);
+
+        match tn_map {
+            None => {
+                self.0
+                    .insert(currency_symbol, singleton((token_name, amount)));
+            }
+            Some(tn_map) => {
+                let val = tn_map.get_mut(&token_name);
+                match val {
+                    None => {
+                        tn_map.insert(token_name, amount);
+                    }
+                    Some(old_amount) => *old_amount = amount,
+                }
+            }
+        }
     }
 
     /// Return true if the value don't have any entries.
