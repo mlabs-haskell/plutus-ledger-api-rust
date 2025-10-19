@@ -11,6 +11,7 @@ Changelog](https://keepachangelog.com/en/1.1.0).
 
 - Add `insert_ada_mut` to `Value`
 - Add `insert_token_mut` to `Value`
+- Add `Copy` derive macro to `Extended<T>` and `Vote`
 
 ## v3.0.4
 
