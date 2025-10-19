@@ -40,7 +40,7 @@ pub enum OutputDatum {
 impl Json for OutputDatum {
     fn to_json(&self) -> serde_json::Value {
         match self {
-            OutputDatum::None => json::json_constructor("NoOutputDatum", Vec::with_capacity(0)),
+            OutputDatum::None => json::json_constructor("NoOutputDatum", Vec::new()),
             OutputDatum::DatumHash(dat_hash) => {
                 json::json_constructor("OutputDatumHash", vec![dat_hash.to_json()])
             }

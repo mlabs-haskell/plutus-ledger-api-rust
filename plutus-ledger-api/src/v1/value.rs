@@ -112,7 +112,7 @@ impl IsPlutusData for CurrencySymbol {
     fn to_plutus_data(&self) -> PlutusData {
         match self {
             CurrencySymbol::NativeToken(policy_hash) => policy_hash.to_plutus_data(),
-            CurrencySymbol::Ada => PlutusData::Bytes(Vec::with_capacity(0)),
+            CurrencySymbol::Ada => PlutusData::Bytes(Vec::new()),
         }
     }
 
@@ -262,23 +262,51 @@ impl Value {
         self.get_token_amount(&CurrencySymbol::Ada, &TokenName::ada())
     }
 
-    /// Insert a new token into the value, or replace the existing quantity.
-    pub fn insert_token(&self, cs: &CurrencySymbol, tn: &TokenName, a: &BigInt) -> Self {
-        let mut result_map = self.0.clone();
+    /// Insert ada into a value by inserting or replacing old value
+    pub fn insert_ada_mut(&mut self, amount: BigInt) {
+        self.0.insert(
+            CurrencySymbol::Ada,
+            BTreeMap::from([(TokenName::ada(), amount)]),
+        );
+    }
+
+    /// Create a new value by inserting a new token or replacing the existing quantity.
+    pub fn insert_token(
+        &self,
+        currency_symbol: &CurrencySymbol,
+        token_name: &TokenName,
+        amount: &BigInt,
+    ) -> Self {
+        let mut result_map = self.clone();
+
+        result_map.insert_token_mut(currency_symbol.clone(), token_name.clone(), amount.clone());
 
         result_map
-            .entry(cs.clone())
-            .and_modify(|tn_map| {
-                tn_map
-                    .entry(tn.clone())
-                    .and_modify(|old_a| {
-                        old_a.clone_from(a);
-                    })
-                    .or_insert_with(|| a.clone());
-            })
-            .or_insert_with(|| singleton((tn.clone(), a.clone())));
+    }
+    /// Insert a new token into the value, or replace the existing quantity.
+    pub fn insert_token_mut(
+        &mut self,
+        currency_symbol: CurrencySymbol,
+        token_name: TokenName,
+        amount: BigInt,
+    ) {
+        let tn_map = self.0.get_mut(&currency_symbol);
 
-        Self(result_map)
+        match tn_map {
+            None => {
+                self.0
+                    .insert(currency_symbol, singleton((token_name, amount)));
+            }
+            Some(tn_map) => {
+                let val = tn_map.get_mut(&token_name);
+                match val {
+                    None => {
+                        tn_map.insert(token_name, amount);
+                    }
+                    Some(old_amount) => *old_amount = amount,
+                }
+            }
+        }
     }
 
     /// Return true if the value don't have any entries.
@@ -698,7 +726,7 @@ pub struct TokenName(pub LedgerBytes);
 impl TokenName {
     /// Ada tokenname (empty bytestring)
     pub fn ada() -> TokenName {
-        TokenName(LedgerBytes(Vec::with_capacity(0)))
+        TokenName(LedgerBytes(Vec::new()))
     }
 
     pub fn is_empty(&self) -> bool {

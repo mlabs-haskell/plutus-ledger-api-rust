@@ -356,7 +356,7 @@ where
 //////////////
 
 /// A set extended with a positive and negative infinity.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "lbf", derive(Json))]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Extended<T>
@@ -416,11 +416,11 @@ where
 {
     fn to_plutus_data(&self) -> PlutusData {
         match self {
-            Extended::NegInf => PlutusData::Constr(BigInt::from(0), Vec::with_capacity(0)),
+            Extended::NegInf => PlutusData::Constr(BigInt::from(0), Vec::new()),
             Extended::Finite(value) => {
                 PlutusData::Constr(BigInt::from(1), vec![value.to_plutus_data()])
             }
-            Extended::PosInf => PlutusData::Constr(BigInt::from(2), Vec::with_capacity(0)),
+            Extended::PosInf => PlutusData::Constr(BigInt::from(2), Vec::new()),
         }
     }
 
