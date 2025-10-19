@@ -416,11 +416,11 @@ where
 {
     fn to_plutus_data(&self) -> PlutusData {
         match self {
-            Extended::NegInf => PlutusData::Constr(BigInt::from(0), Vec::with_capacity(0)),
+            Extended::NegInf => PlutusData::Constr(BigInt::from(0), Vec::new()),
             Extended::Finite(value) => {
                 PlutusData::Constr(BigInt::from(1), vec![value.to_plutus_data()])
             }
-            Extended::PosInf => PlutusData::Constr(BigInt::from(2), Vec::with_capacity(0)),
+            Extended::PosInf => PlutusData::Constr(BigInt::from(2), Vec::new()),
         }
     }
 

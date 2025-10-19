@@ -112,7 +112,7 @@ impl IsPlutusData for CurrencySymbol {
     fn to_plutus_data(&self) -> PlutusData {
         match self {
             CurrencySymbol::NativeToken(policy_hash) => policy_hash.to_plutus_data(),
-            CurrencySymbol::Ada => PlutusData::Bytes(Vec::with_capacity(0)),
+            CurrencySymbol::Ada => PlutusData::Bytes(Vec::new()),
         }
     }
 
@@ -726,7 +726,7 @@ pub struct TokenName(pub LedgerBytes);
 impl TokenName {
     /// Ada tokenname (empty bytestring)
     pub fn ada() -> TokenName {
-        TokenName(LedgerBytes(Vec::with_capacity(0)))
+        TokenName(LedgerBytes(Vec::new()))
     }
 
     pub fn is_empty(&self) -> bool {
