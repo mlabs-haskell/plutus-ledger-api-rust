@@ -3,12 +3,13 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use cardano_serialization_lib as csl;
-
 #[cfg(feature = "lbf")]
 use lbr_prelude::json::{self, Error, Json};
 use num_bigint::BigInt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate as plutus_ledger_api;
 use crate::csl::csl_to_pla::{FromCSL, TryFromCSL, TryFromCSLError, TryToPLA};
@@ -38,7 +39,7 @@ pub struct Address {
 }
 
 impl Address {
-    pub fn with_extra_info(&self, network_tag: u8) -> AddressWithExtraInfo {
+    pub fn with_extra_info<'a>(&'a self, network_tag: u8) -> AddressWithExtraInfo<'a> {
         AddressWithExtraInfo {
             address: self,
             network_tag,
@@ -85,6 +86,7 @@ impl TryFromCSL<csl::Address> for Address {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 /// Address with network information. The `WithExtraInfo` variant has Display instance, serializing into
 /// a bech32 address format.
 pub struct AddressWithExtraInfo<'a> {

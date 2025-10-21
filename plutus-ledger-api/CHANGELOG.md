@@ -5,6 +5,16 @@
 This changelog is based on [Keep A
 Changelog](https://keepachangelog.com/en/1.1.0).
 
+## 4.0.0
+
+### Changed
+
+- `serde` serialization format improvements:
+  - all byte strings are formatted as hex strings
+  - Addresses are formatted using bech32, if supplemented with network id
+  - CurrencySymbols are formatted as hex if native tokens or as the `lovelace`
+    string
+
 ## 3.1.0
 
 ### Added
