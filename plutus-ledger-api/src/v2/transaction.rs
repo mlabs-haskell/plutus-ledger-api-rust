@@ -50,6 +50,22 @@ pub struct TransactionOutput {
     pub reference_script: Option<ScriptHash>,
 }
 
+impl TransactionOutput {
+    pub fn with_extra_info<'a>(
+        &'a self,
+        scripts: &'a BTreeMap<ScriptHash, csl::PlutusScript>,
+        network_id: u8,
+        data_cost: &'a csl::DataCost,
+    ) -> TransactionOutputWithExtraInfo<'a> {
+        TransactionOutputWithExtraInfo {
+            transaction_output: Cow::Borrowed(self),
+            scripts: Cow::Borrowed(scripts),
+            network_id,
+            data_cost: Cow::Borrowed(data_cost),
+        }
+    }
+}
+
 impl TryFromCSL<csl::TransactionOutput> for TransactionOutput {
     fn try_from_csl(value: &csl::TransactionOutput) -> Result<Self, TryFromCSLError> {
         Ok(TransactionOutput {

@@ -26,6 +26,20 @@ use crate::v1::crypto::LedgerBytes;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Redeemer(pub PlutusData);
 
+impl Redeemer {
+    pub fn with_extra_info<'a>(
+        &'a self,
+        tag: csl::RedeemerTag,
+        index: u64,
+    ) -> RedeemerWithExtraInfo<'a> {
+        RedeemerWithExtraInfo {
+            redeemer: Cow::Borrowed(self),
+            tag,
+            index,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct RedeemerWithExtraInfo<'a> {
     pub redeemer: Cow<'a, Redeemer>,
