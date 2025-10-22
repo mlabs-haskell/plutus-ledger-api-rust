@@ -15,6 +15,8 @@ use nom::{
 use num_bigint::BigInt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use super::{
     address::{Address, StakingCredential},
@@ -47,7 +49,7 @@ use crate::{
 /// inside the transaction
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Constr"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionInput {
     pub transaction_id: TransactionHash,
@@ -139,7 +141,7 @@ impl FromStr for TransactionInput {
 /// Note: Plutus docs might incorrectly state that it uses SHA256.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Constr"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionHash(pub LedgerBytes);
 

@@ -16,6 +16,8 @@ use nom::{
 use num_bigint::BigInt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 #[cfg(feature = "chrono")]
 pub use crate::v1::transaction::POSIXTimeConversionError;
@@ -59,7 +61,7 @@ use super::{
 /// V3 TransactionHash uses a more efficient Plutus Data encoding
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Newtype"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionHash(pub LedgerBytes);
 
@@ -131,7 +133,7 @@ impl FromStr for TransactionHash {
 /// inside the transaction
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Constr"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionInput {
     pub transaction_id: TransactionHash,
