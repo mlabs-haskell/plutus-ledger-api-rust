@@ -1,4 +1,5 @@
 //! Types related to Cardano addresses
+use std::borrow::Cow;
 use std::str::FromStr;
 
 use anyhow::anyhow;
@@ -41,7 +42,14 @@ pub struct Address {
 impl Address {
     pub fn with_extra_info<'a>(&'a self, network_tag: u8) -> AddressWithExtraInfo<'a> {
         AddressWithExtraInfo {
-            address: self,
+            address: Cow::Borrowed(self),
+            network_tag,
+        }
+    }
+
+    pub fn into_address_with_extra_info<'a>(self, network_tag: u8) -> AddressWithExtraInfo<'a> {
+        AddressWithExtraInfo {
+            address: Cow::Owned(self),
             network_tag,
         }
     }
@@ -90,7 +98,7 @@ impl TryFromCSL<csl::Address> for Address {
 /// Address with network information. The `WithExtraInfo` variant has Display instance, serializing into
 /// a bech32 address format.
 pub struct AddressWithExtraInfo<'a> {
-    pub address: &'a Address,
+    pub address: Cow<'a, Address>,
     pub network_tag: u8,
 }
 
@@ -109,6 +117,22 @@ impl TryFromPLA<AddressWithExtraInfo<'_>> for csl::Address {
                         .to_address()
                 }
             },
+        })
+    }
+}
+
+impl<'a> TryFromCSL<csl::Address> for AddressWithExtraInfo<'a> {
+    fn try_from_csl(value: &csl::Address) -> Result<Self, TryFromCSLError>
+    where
+        Self: Sized,
+    {
+        Ok(AddressWithExtraInfo {
+            address: Cow::Owned(value.try_to_pla()?),
+            network_tag: value.network_id().map_err(|err| {
+                TryFromCSLError::ImpossibleConversion(format!(
+                    "Couldn't extract network tag from address: {err}"
+                ))
+            })?,
         })
     }
 }
@@ -334,7 +358,7 @@ impl FromCSL<csl::Pointer> for StakingCredential {
 
 #[derive(Clone, Debug)]
 pub struct RewardAddressWithExtraInfo<'a> {
-    pub staking_credential: &'a StakingCredential,
+    pub staking_credential: Cow<'a, StakingCredential>,
     pub network_tag: u8,
 }
 
@@ -342,7 +366,7 @@ impl TryFromPLA<RewardAddressWithExtraInfo<'_>> for csl::RewardAddress {
     fn try_from_pla(val: &RewardAddressWithExtraInfo<'_>) -> Result<Self, TryFromPLAError> {
         Ok(csl::RewardAddress::new(
             val.network_tag,
-            &val.staking_credential.try_to_csl()?,
+            &val.staking_credential.as_ref().try_to_csl()?,
         ))
     }
 }

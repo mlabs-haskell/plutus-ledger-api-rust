@@ -20,6 +20,8 @@ Changelog](https://keepachangelog.com/en/1.1.0).
   - Addresses are formatted using bech32, if supplemented with network id
   - CurrencySymbols are formatted as hex if native tokens or as the `lovelace`
     string
+- `WithExtraInfo` types are now using Cow under the hood, allowing ownership of
+  the data
 
 ## 3.1.0
 

@@ -1,5 +1,6 @@
 //! Types related to Cardano transactions.
 
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 use cardano_serialization_lib as csl;
@@ -86,17 +87,17 @@ impl TryFromCSL<csl::TransactionOutputs> for Vec<TransactionOutput> {
 
 #[derive(Clone, Debug)]
 pub struct TransactionOutputWithExtraInfo<'a> {
-    pub transaction_output: &'a TransactionOutput,
-    pub scripts: &'a BTreeMap<ScriptHash, csl::PlutusScript>,
+    pub transaction_output: Cow<'a, TransactionOutput>,
+    pub scripts: Cow<'a, BTreeMap<ScriptHash, csl::PlutusScript>>,
     pub network_id: u8,
-    pub data_cost: &'a csl::DataCost,
+    pub data_cost: Cow<'a, csl::DataCost>,
 }
 
 impl TryFromPLA<TransactionOutputWithExtraInfo<'_>> for csl::TransactionOutput {
     fn try_from_pla(val: &TransactionOutputWithExtraInfo<'_>) -> Result<Self, TryFromPLAError> {
         let mut output_builder = csl::TransactionOutputBuilder::new().with_address(
             &AddressWithExtraInfo {
-                address: &val.transaction_output.address,
+                address: Cow::Borrowed(&val.transaction_output.address),
                 network_tag: val.network_id,
             }
             .try_to_csl()?,
@@ -127,7 +128,7 @@ impl TryFromPLA<TransactionOutputWithExtraInfo<'_>> for csl::TransactionOutput {
 
         let value_without_min_utxo = val.transaction_output.value.try_to_csl()?;
 
-        let mut calc = csl::MinOutputAdaCalculator::new_empty(val.data_cost)
+        let mut calc = csl::MinOutputAdaCalculator::new_empty(val.data_cost.as_ref())
             .map_err(TryFromPLAError::CSLJsError)?;
         calc.set_amount(&value_without_min_utxo);
         match &val.transaction_output.datum {
@@ -205,7 +206,7 @@ pub struct TransactionInfo {
 
 #[derive(Clone, Debug)]
 pub struct WithdrawalsWithExtraInfo<'a> {
-    pub withdrawals: &'a AssocMap<StakingCredential, BigInt>,
+    pub withdrawals: Cow<'a, AssocMap<StakingCredential, BigInt>>,
     pub network_tag: u8,
 }
 
@@ -217,7 +218,7 @@ impl TryFromPLA<WithdrawalsWithExtraInfo<'_>> for csl::Withdrawals {
             .try_fold(csl::Withdrawals::new(), |mut acc, (s, q)| {
                 acc.insert(
                     &RewardAddressWithExtraInfo {
-                        staking_credential: s,
+                        staking_credential: Cow::Borrowed(s),
                         network_tag: val.network_tag,
                     }
                     .try_to_csl()?,

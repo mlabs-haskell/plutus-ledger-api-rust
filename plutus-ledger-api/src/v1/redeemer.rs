@@ -1,5 +1,7 @@
 //! Types related to Plutus Redeemers
 
+use std::borrow::Cow;
+
 use cardano_serialization_lib as csl;
 
 #[cfg(feature = "lbf")]
@@ -26,16 +28,16 @@ pub struct Redeemer(pub PlutusData);
 
 #[derive(Clone, Debug)]
 pub struct RedeemerWithExtraInfo<'a> {
-    pub redeemer: &'a Redeemer,
-    pub tag: &'a csl::RedeemerTag,
+    pub redeemer: Cow<'a, Redeemer>,
+    pub tag: csl::RedeemerTag,
     pub index: u64,
 }
 
 impl TryFromPLA<RedeemerWithExtraInfo<'_>> for csl::Redeemer {
     fn try_from_pla<'a>(val: &RedeemerWithExtraInfo<'_>) -> Result<csl::Redeemer, TryFromPLAError> {
-        let Redeemer(plutus_data) = val.redeemer;
+        let Redeemer(plutus_data) = val.redeemer.as_ref();
         Ok(csl::Redeemer::new(
-            val.tag,
+            &val.tag,
             &val.index.try_to_csl()?,
             &plutus_data.try_to_csl()?,
             &csl::ExUnits::new(&csl::BigNum::from(0u64), &csl::BigNum::from(0u64)),
