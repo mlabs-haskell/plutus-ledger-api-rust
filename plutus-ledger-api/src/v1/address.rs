@@ -151,6 +151,18 @@ impl std::fmt::Display for AddressWithExtraInfo<'_> {
     }
 }
 
+impl<'a> FromStr for AddressWithExtraInfo<'a> {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let csl_addr = csl::Address::from_bech32(s)
+            .map_err(|err| anyhow!("Couldn't parse bech32 address: {}", err))?;
+        csl_addr
+            .try_to_pla()
+            .map_err(|err| anyhow!("Couldn't convert address: {}", err))
+    }
+}
+
 ////////////////
 // Credential //
 ////////////////
