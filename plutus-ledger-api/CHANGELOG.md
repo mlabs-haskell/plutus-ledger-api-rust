@@ -7,6 +7,12 @@ Changelog](https://keepachangelog.com/en/1.1.0).
 
 ## 4.0.0
 
+### Added
+
+- reexporting all types and functions from submodules (e.g.:
+  `v2::transaction::TransactionHash` can now be reached from
+  `v2::TransactionHash` as well)
+
 ### Changed
 
 - `serde` serialization format improvements:
