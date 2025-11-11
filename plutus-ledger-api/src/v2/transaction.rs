@@ -197,6 +197,7 @@ impl From<(TransactionInput, TransactionOutput)> for TxInInfo {
     }
 }
 
+/////////////////////
 // TransactionInfo //
 /////////////////////
 
