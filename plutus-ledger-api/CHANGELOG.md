@@ -12,8 +12,9 @@ Changelog](https://keepachangelog.com/en/1.1.0).
 - reexporting all types and functions from submodules (e.g.:
   `v2::transaction::TransactionHash` can now be reached from
   `v2::TransactionHash` as well)
-- implement `From<TransactionHash>` and `From<TransactionInput>` for v1 equivalents,
-  and `From<TxInInfo>` for v2 TxInInfo (only Plutus encoding differs)
+- implement `From<v3::TransactionHash>` and `From<v3::TransactionInput>` for v1 equivalents,
+  and `From<v3::TxInInfo>` for v2 TxInInfo (only Plutus encoding differs)
+- `iter`, `iter_mut`, `IntoIter` and `FromIterator` implementations for `AssocMap`
 
 ### Changed
 
