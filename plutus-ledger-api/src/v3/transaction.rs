@@ -16,6 +16,8 @@ use nom::{
 use num_bigint::BigInt;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 #[cfg(feature = "chrono")]
 pub use crate::v1::transaction::POSIXTimeConversionError;
@@ -32,7 +34,9 @@ use crate::{
     },
     error::ConversionError,
     plutus_data::{IsPlutusData, PlutusData},
+    v1,
     v2::{
+        self,
         address::Credential,
         assoc_map::AssocMap,
         crypto::{PaymentPubKeyHash, StakePubKeyHash},
@@ -59,7 +63,7 @@ use super::{
 /// V3 TransactionHash uses a more efficient Plutus Data encoding
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Newtype"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionHash(pub LedgerBytes);
 
@@ -89,6 +93,18 @@ impl TryFromPLA<TransactionHash> for csl::TransactionHash {
     fn try_from_pla(val: &TransactionHash) -> Result<Self, TryFromPLAError> {
         csl::TransactionHash::from_bytes(val.0 .0.to_owned())
             .map_err(TryFromPLAError::CSLDeserializeError)
+    }
+}
+
+impl From<v1::transaction::TransactionHash> for TransactionHash {
+    fn from(value: v1::transaction::TransactionHash) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<TransactionHash> for v1::transaction::TransactionHash {
+    fn from(value: TransactionHash) -> Self {
+        Self(value.0)
     }
 }
 
@@ -131,7 +147,7 @@ impl FromStr for TransactionHash {
 /// inside the transaction
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Constr"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TransactionInput {
     pub transaction_id: TransactionHash,
@@ -178,6 +194,24 @@ impl TryFromPLA<Vec<TransactionInput>> for csl::TransactionInputs {
                 acc.add(&input.try_to_csl()?);
                 Ok(acc)
             })
+    }
+}
+
+impl From<TransactionInput> for v1::transaction::TransactionInput {
+    fn from(value: TransactionInput) -> Self {
+        Self {
+            transaction_id: value.transaction_id.into(),
+            index: value.index,
+        }
+    }
+}
+
+impl From<v1::transaction::TransactionInput> for TransactionInput {
+    fn from(value: v1::transaction::TransactionInput) -> Self {
+        Self {
+            transaction_id: value.transaction_id.into(),
+            index: value.index,
+        }
     }
 }
 
@@ -544,6 +578,24 @@ pub struct TxInInfo {
 impl From<(TransactionInput, TransactionOutput)> for TxInInfo {
     fn from((reference, output): (TransactionInput, TransactionOutput)) -> TxInInfo {
         TxInInfo { reference, output }
+    }
+}
+
+impl From<v2::transaction::TxInInfo> for TxInInfo {
+    fn from(value: v2::transaction::TxInInfo) -> Self {
+        Self {
+            reference: value.reference.into(),
+            output: value.output,
+        }
+    }
+}
+
+impl From<TxInInfo> for v2::transaction::TxInInfo {
+    fn from(value: TxInInfo) -> Self {
+        Self {
+            reference: value.reference.into(),
+            output: value.output,
+        }
     }
 }
 

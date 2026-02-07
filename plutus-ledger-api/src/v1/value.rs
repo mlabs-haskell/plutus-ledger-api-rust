@@ -30,6 +30,8 @@ use num_traits::Zero;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "lbf")]
 use serde_json;
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate as plutus_ledger_api;
 use crate::aux::{big_int, singleton, union_b_tree_maps_with, union_btree_maps_with};
@@ -49,7 +51,7 @@ use super::crypto::ledger_bytes;
 /// Identifier of a currency, which could be either Ada (or tAda), or a native token represented by
 /// it's minting policy hash. A currency may be associated with multiple `AssetClass`es.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 pub enum CurrencySymbol {
     Ada,
     NativeToken(MintingPolicyHash),
@@ -719,7 +721,7 @@ impl FromCSL<csl::Mint> for Value {
 
 /// Name of a token. This can be any arbitrary bytearray
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 #[cfg_attr(feature = "lbf", derive(Json))]
 pub struct TokenName(pub LedgerBytes);
 
