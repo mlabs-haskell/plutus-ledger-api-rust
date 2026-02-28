@@ -1,4 +1,3 @@
-use data_encoding::HEXLOWER;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -15,7 +14,7 @@ pub enum ConversionError {
     #[error("String cannot be parsed as a hexadecimal value: {value_hex}")]
     HexDecodeError {
         value_hex: String,
-        source: data_encoding::DecodeError,
+        source: hex::FromHexError,
     },
 
     #[error(transparent)]
@@ -34,11 +33,11 @@ impl ConversionError {
             expected,
             got: bytes.len(),
             relation: relation.to_string(),
-            value_hex: HEXLOWER.encode(bytes),
+            value_hex: hex::encode(bytes),
         }
     }
 
-    pub fn hex_decode_error(err: data_encoding::DecodeError, value_hex: &str) -> Self {
+    pub fn hex_decode_error(err: hex::FromHexError, value_hex: &str) -> Self {
         ConversionError::HexDecodeError {
             source: err,
             value_hex: value_hex.to_string(),

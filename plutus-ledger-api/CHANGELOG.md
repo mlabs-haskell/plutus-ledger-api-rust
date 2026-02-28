@@ -5,6 +5,27 @@
 This changelog is based on [Keep A
 Changelog](https://keepachangelog.com/en/1.1.0).
 
+## 4.0.0
+
+### Added
+
+- reexporting all types and functions from submodules (e.g.:
+  `v2::transaction::TransactionHash` can now be reached from
+  `v2::TransactionHash` as well)
+- implement `From<v3::TransactionHash>` and `From<v3::TransactionInput>` for v1 equivalents,
+  and `From<v3::TxInInfo>` for v2 TxInInfo (only Plutus encoding differs)
+- `iter`, `iter_mut`, `IntoIter` and `FromIterator` implementations for `AssocMap`
+
+### Changed
+
+- `serde` serialization format improvements:
+  - all byte strings are formatted as hex strings
+  - Addresses are formatted using bech32, if supplemented with network id
+  - CurrencySymbols are formatted as hex if native tokens or as the `lovelace`
+    string
+- `WithExtraInfo` types are now using Cow under the hood, allowing ownership of
+  the data
+
 ## 3.1.0
 
 ### Added
