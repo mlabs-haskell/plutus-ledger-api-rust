@@ -65,6 +65,19 @@ impl<K, V> AssocMap<K, V> {
             }
         }
     }
+    /// Returns an iterator over the slice.
+    ///
+    /// The iterator yields all items from start to end.
+    pub fn iter<'a>(&'a self) -> std::slice::Iter<'a, (K, V)> {
+        self.0.iter()
+    }
+
+    /// Returns an iterator that allows modifying each value.
+    ///
+    /// The iterator yields all items from start to end.
+    pub fn iter_mut<'a>(&'a mut self) -> std::slice::IterMut<'a, (K, V)> {
+        self.0.iter_mut()
+    }
 }
 
 impl<K: IsPlutusData, V: IsPlutusData> IsPlutusData for AssocMap<K, V> {
@@ -119,6 +132,22 @@ impl<K: Hash + Eq, V> From<AssocMap<K, V>> for LinkedHashMap<K, V> {
 impl<K: Hash + Eq, V> From<LinkedHashMap<K, V>> for AssocMap<K, V> {
     fn from(value: LinkedHashMap<K, V>) -> Self {
         AssocMap(value.into_iter().collect())
+    }
+}
+
+impl<K, V> IntoIterator for AssocMap<K, V> {
+    type Item = (K, V);
+
+    type IntoIter = std::vec::IntoIter<(K, V)>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<K, V> FromIterator<(K, V)> for AssocMap<K, V> {
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        AssocMap(Vec::from_iter(iter))
     }
 }
 

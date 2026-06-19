@@ -95,7 +95,8 @@ mod display_serialisation_tests {
 
         use plutus_ledger_api::{
             generators::correct::v1::{
-                arb_address, arb_asset_class, arb_currency_symbol, arb_transaction_input, arb_value,
+                arb_address, arb_asset_class, arb_currency_symbol, arb_ledger_bytes,
+                arb_transaction_input, arb_value,
             },
             v1::{address::Address, value::TokenName},
         };
@@ -109,6 +110,11 @@ mod display_serialisation_tests {
         }
 
         proptest! {
+
+            #[test]
+            fn ledger_bytes(val in arb_ledger_bytes(10)) {
+                assert_eq!(val, from_to_string(&val)?);
+            }
 
             #[test]
             fn currency_symbol(val in arb_currency_symbol()) {

@@ -11,26 +11,26 @@ use crate::csl::pla_to_csl::{TryFromPLA, TryFromPLAError, TryToCSL};
 pub use is_plutus_data_derive::IsPlutusData;
 
 #[cfg(feature = "lbf")]
-use data_encoding::HEXLOWER;
-#[cfg(feature = "lbf")]
 use lbr_prelude::error::Error;
 #[cfg(feature = "lbf")]
 use lbr_prelude::json::{
     case_json_constructor, case_json_object, json_constructor, json_object, Json,
 };
+#[cfg(feature = "serde")]
+use serde_with::serde_as;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 /// Data representation of on-chain data such as Datums and Redeemers
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde_as)]
 pub enum PlutusData {
     Constr(BigInt, Vec<PlutusData>),
     Map(Vec<(PlutusData, PlutusData)>),
     List(Vec<PlutusData>),
     Integer(BigInt),
-    Bytes(Vec<u8>),
+    Bytes(#[cfg_attr(feature = "serde", serde_as = "hex::serde")] Vec<u8>),
 }
 
 #[derive(Clone, Debug)]
@@ -141,7 +141,7 @@ impl Json for PlutusData {
             PlutusData::List(list) => json_constructor("List", vec![list.to_json()]),
             PlutusData::Integer(int) => json_constructor("Integer", vec![int.to_json()]),
             PlutusData::Bytes(bytes) => {
-                json_constructor("Bytes", vec![String::to_json(&HEXLOWER.encode(bytes))])
+                json_constructor("Bytes", vec![String::to_json(&hex::encode(bytes))])
             }
         }
     }
@@ -219,7 +219,7 @@ impl Json for PlutusData {
                     Box::new(|ctor_fields| match &ctor_fields[..] {
                         [val] => {
                             let bytes = String::from_json(val).and_then(|str| {
-                                HEXLOWER.decode(&str.into_bytes()).map_err(|_| {
+                                hex::decode(&str.into_bytes()).map_err(|_| {
                                     Error::UnexpectedJsonInvariant {
                                         wanted: "base16 string".to_owned(),
                                         got: "unexpected string".to_owned(),

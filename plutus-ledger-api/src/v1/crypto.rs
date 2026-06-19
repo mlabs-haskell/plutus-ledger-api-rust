@@ -1,13 +1,21 @@
 //! Types for cryptographic primitives, and other lower level building blocks
+
+use std::str::FromStr;
+
+use anyhow::anyhow;
 use cardano_serialization_lib as csl;
-use data_encoding::HEXLOWER;
 #[cfg(feature = "lbf")]
 use lbr_prelude::json::{Error, Json};
+use nom::combinator::all_consuming;
+use nom::Finish;
 use nom::{combinator::map_res, error::VerboseError, IResult};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "serde")]
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate as plutus_ledger_api;
+use crate::error::ConversionError;
 use crate::{
     csl::{
         csl_to_pla::FromCSL,
@@ -79,47 +87,59 @@ pub struct StakePubKeyHash(pub Ed25519PubKeyHash);
 /// A bytestring in the Cardano ledger context
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, IsPlutusData)]
 #[is_plutus_data_derive_strategy = "Newtype"]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(SerializeDisplay, DeserializeFromStr))]
 pub struct LedgerBytes(pub Vec<u8>);
 
 impl std::fmt::Debug for LedgerBytes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", HEXLOWER.encode(&self.0))
+        write!(f, "{}", hex::encode(&self.0))
     }
 }
 
 impl std::fmt::Display for LedgerBytes {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", HEXLOWER.encode(&self.0))
+        write!(f, "{}", hex::encode(&self.0))
     }
 }
 
+impl FromStr for LedgerBytes {
+    type Err = ConversionError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        all_consuming(ledger_bytes)(s)
+            .finish()
+            .map_err(|err| {
+                ConversionError::ParseError(anyhow!(
+                    "Error while parsing CurrencySymbol '{}': {}",
+                    s,
+                    err
+                ))
+            })
+            .map(|(_, cs)| cs)
+    }
+}
 /// Nom parser for LedgerBytes
 /// Expects a hexadecimal string of arbitrary length (0 length is allowed)
 /// E.g.: 00112233445566778899aabbcc
 pub(crate) fn ledger_bytes(input: &str) -> IResult<&str, LedgerBytes, VerboseError<&str>> {
     map_res(nom::character::complete::hex_digit0, |hex_bytes: &str| {
-        HEXLOWER
-            .decode(&hex_bytes.to_owned().to_ascii_lowercase().into_bytes())
-            .map(LedgerBytes)
+        hex::decode(&hex_bytes.to_owned().to_ascii_lowercase().into_bytes()).map(LedgerBytes)
     })(input)
 }
 
 #[cfg(feature = "lbf")]
 impl Json for LedgerBytes {
     fn to_json(&self) -> serde_json::Value {
-        String::to_json(&HEXLOWER.encode(&self.0))
+        String::to_json(&hex::encode(&self.0))
     }
 
     fn from_json(value: &serde_json::Value) -> Result<Self, Error> {
         let bytes = String::from_json(value).and_then(|str| {
-            HEXLOWER
-                .decode(&str.into_bytes())
-                .map_err(|_| Error::UnexpectedJsonInvariant {
-                    wanted: "base16 string".to_owned(),
-                    got: "unexpected string".to_owned(),
-                    parser: "Plutus.V1.Bytes".to_owned(),
-                })
+            hex::decode(&str.into_bytes()).map_err(|_| Error::UnexpectedJsonInvariant {
+                wanted: "base16 string".to_owned(),
+                got: "unexpected string".to_owned(),
+                parser: "Plutus.V1.Bytes".to_owned(),
+            })
         })?;
 
         Ok(Self(bytes))
